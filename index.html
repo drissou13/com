@@ -1,338 +1,208 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Communication Festipyat</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: auto;
-      background: #f4f4f4;
-      padding: 10px;
-    }
-    h2, h3, h4 {
-      text-align: center;
-    }
-    .box {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    input, select, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #007bff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #clearBtn {
-      background-color: #dc3545;
-    }
-    #logoutBtn, #logoutBtn2 {
-      background-color: #888;
-    }
-    .urgent {
-      color: red;
-      font-weight: bold;
-    }
-    .response {
-      background: #e0ffe0;
-      border-left: 5px solid green;
-    }
-    #messageList {
-      border-top: 1px solid #ccc;
-      margin-top: 15px;
-      padding-top: 10px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .messageItem {
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      background: #f1f1f1;
-      word-wrap: break-word;
-    }
-    .messageItem.urgent {
-      border-left: 6px solid red;
-      background: #ffe5e5;
-    }
-    .meta {
-      font-size: 0.85em;
-      color: #666;
-      margin-top: 5px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #121212;
-        color: #f0f0f0;
-      }
-      .box {
-        background: #1e1e1e;
-        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
-      }
-      input, select, textarea {
-        background: #333;
-        color: #f0f0f0;
-        border-color: #555;
-      }
-      button {
-        background-color: #2196f3;
-      }
-      #clearBtn {
-        background-color: #c62828;
-      }
-      .messageItem {
-        background: #2a2a2a;
-      }
-      .messageItem.urgent {
-        background: #5c0000;
-        color: white;
-      }
-      .response {
-        background: #003300;
-      }
-    }
-
-    @media screen and (max-width: 600px) {
-      body {
-        padding: 8px;
-      }
-      input, select, textarea, button {
-        font-size: 1rem;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Communication Régie / Présentateur</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+  }
+  #loginBox, #regieBox, #speakerBox {
+    max-width: 400px;
+    margin: auto;
+  }
+  label {
+    display: block;
+    margin: 10px 0 5px;
+  }
+  input[type=text], input[type=password], textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #messages {
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    min-height: 120px;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  .message {
+    background-color: #e1f5fe;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #logoutBtn {
+    margin-top: 20px;
+    background: #f44336;
+    color: white;
+    border: none;
+  }
+</style>
 </head>
 <body>
 
-<audio id="notifSound" src="https://cdn.sbguys.online/assets/uploads/1732388651-9672fa4d-1b67-4a84-aa71-0da432d9cb7e.mp3" preload="auto"></audio>
-
-<div class="box" id="loginBox">
+<div id="loginBox">
   <h2>Connexion</h2>
-  <label for="username">Nom d'utilisateur :</label>
-  <select id="username">
-    <option value="">-- Sélectionner --</option>
-    <option value="regie">régie</option>
-    <option value="speaker">speaker</option>
-    <option value="orga1">orga1</option>
-    <option value="orga2">orga2</option>
-  </select>
-
-  <label for="password">Mot de passe :</label>
-  <input type="password" id="password" placeholder="Mot de passe">
-
+  <label for="username">Utilisateur</label>
+  <input type="text" id="username" placeholder="regie ou speaker" autocomplete="off" />
+  
+  <label for="password">Mot de passe</label>
+  <input type="password" id="password" placeholder="Mot de passe" autocomplete="off" />
+  
   <button id="loginBtn">Se connecter</button>
+  <p id="loginError" style="color: red;"></p>
 </div>
 
-<div class="box" id="regieInterface" style="display: none;">
-  <h3>Régie - Envoyer un message</h3>
-  <label>Message prédéfini :</label>
-  <select id="preset">
-    <option value="">-- Choisir --</option>
-    <option value="Le son est coupé.">Le son est coupé.</option>
-    <option value="Temps presque écoulé.">Temps presque écoulé.</option>
-    <option value="Problème technique détecté.">Problème technique détecté.</option>
-    <option value="Merci de conclure rapidement.">Merci de conclure rapidement.</option>
-  </select>
-
-  <label>Message personnalisé :</label>
-  <textarea id="customMessage" rows="3" placeholder="Écrire un message..."></textarea>
-
-  <label><input type="checkbox" id="urgentCheck"> Urgent</label>
-  <label><input type="checkbox" id="toggleResponse" checked> Autoriser les réponses</label>
-
+<div id="regieBox" style="display:none;">
+  <h2>Interface Régie</h2>
+  <textarea id="messageInput" placeholder="Tapez un message pour le présentateur..."></textarea>
   <button id="sendBtn">Envoyer</button>
-  <button id="clearBtn">Effacer l'historique</button>
-  <button id="logoutBtn">Déconnexion</button>
+  <button id="logoutBtnRegie">Se déconnecter</button>
 </div>
 
-<div class="box" id="viewerInterface" style="display: none;">
-  <h3>Messages</h3>
-  <div id="messageList">Aucun message</div>
-
-  <div id="responseBox" style="margin-top: 30px;">
-    <h4>Répondre à la régie</h4>
-    <select id="responseSelect">
-      <option value="">-- Choisir une réponse --</option>
-      <option value="Message bien reçu.">Message bien reçu.</option>
-      <option value="Problème en cours de résolution.">Problème en cours de résolution.</option>
-      <option value="Merci pour l'information.">Merci pour l'information.</option>
-    </select>
-    <button id="respondBtn">Envoyer la réponse</button>
-    <button id="logoutBtn2">Déconnexion</button>
-  </div>
+<div id="speakerBox" style="display:none;">
+  <h2>Interface Présentateur</h2>
+  <div id="messages">Aucun message pour l'instant.</div>
+  <button id="logoutBtnSpeaker">Se déconnecter</button>
 </div>
 
 <script>
-  const users = ['regie', 'speaker', 'orga1', 'orga2'];
-  const PASSWORD = 'festipyat2025';
+  // Comptes définis
+  const users = {
+    regie: "festipyat",
+    speaker: "speaker"
+    son:     "son"
+  };
 
   const loginBox = document.getElementById('loginBox');
-  const regieBox = document.getElementById('regieInterface');
-  const viewerBox = document.getElementById('viewerInterface');
-  const presetSelect = document.getElementById('preset');
-  const customMessage = document.getElementById('customMessage');
-  const sendBtn = document.getElementById('sendBtn');
-  const loginBtn = document.getElementById('loginBtn');
+  const regieBox = document.getElementById('regieBox');
+  const speakerBox = document.getElementById('speakerBox');
+  const loginError = document.getElementById('loginError');
+
   const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
-  const urgentCheck = document.getElementById('urgentCheck');
-  const toggleResponse = document.getElementById('toggleResponse');
-  const messageList = document.getElementById('messageList');
-  const responseSelect = document.getElementById('responseSelect');
-  const respondBtn = document.getElementById('respondBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const sound = document.getElementById('notifSound');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const logoutBtn2 = document.getElementById('logoutBtn2');
+  const loginBtn = document.getElementById('loginBtn');
 
-  let currentUser = null;
-  let lastMessageCount = 0;
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
 
-  function getMessages() {
-    return JSON.parse(localStorage.getItem('messages') || '[]');
+  const messagesDiv = document.getElementById('messages');
+
+  const logoutBtnRegie = document.getElementById('logoutBtnRegie');
+  const logoutBtnSpeaker = document.getElementById('logoutBtnSpeaker');
+
+  // Stockage session (simple) dans localStorage
+  function setSession(user) {
+    localStorage.setItem('currentUser', user);
+  }
+  function getSession() {
+    return localStorage.getItem('currentUser');
+  }
+  function clearSession() {
+    localStorage.removeItem('currentUser');
   }
 
-  function saveMessages(messages) {
-    localStorage.setItem('messages', JSON.stringify(messages));
-  }
-
-  function addMessage(msg) {
-    const messages = getMessages();
-    messages.push(msg);
-    saveMessages(messages);
-  }
-
-  function displayMessages() {
-    const messages = getMessages();
-
-    if (messages.length > lastMessageCount && lastMessageCount !== 0) {
-      sound.play().catch(() => {});
-    }
-
-    lastMessageCount = messages.length;
-
-    if (messages.length === 0) {
-      messageList.innerHTML = "<em>Aucun message</em>";
-      return;
-    }
-
-    messageList.innerHTML = '';
-    messages.slice().reverse().forEach(msg => {
-      const div = document.createElement('div');
-      div.className = 'messageItem';
-      if (msg.urgent) div.classList.add('urgent');
-      if (msg.author !== 'regie') div.classList.add('response');
-
-      div.innerHTML = `<strong>${msg.urgent ? '[URGENT] ' : ''}${msg.text}</strong><div class="meta">De : ${msg.author} – ${new Date(msg.time).toLocaleTimeString()}</div>`;
-      messageList.appendChild(div);
-    });
-  }
-
-  loginBtn.onclick = () => {
-    const user = usernameInput.value;
-    const pass = passwordInput.value;
-    if (!user || !pass) return alert("Remplissez tous les champs.");
-    if (!users.includes(user) || pass !== PASSWORD) return alert("Identifiants invalides.");
-
-    currentUser = user;
+  // Affiche les bonnes sections selon l'utilisateur connecté
+  function showInterface(user) {
     loginBox.style.display = 'none';
-
-    const allowResponses = localStorage.getItem('allowResponses') !== '0';
-    if (!allowResponses && currentUser !== 'regie') {
-      document.getElementById('responseBox').style.display = 'none';
-    }
-
-    if (user === 'regie') {
+    if(user === 'regie') {
       regieBox.style.display = 'block';
-      toggleResponse.checked = allowResponses;
+      speakerBox.style.display = 'none';
+    } else if(user === 'speaker') {
+      speakerBox.style.display = 'block';
+      regieBox.style.display = 'none';
+      startCheckingMessages();
     }
+  }
 
-    viewerBox.style.display = 'block';
-    displayMessages();
-    setInterval(displayMessages, 2000);
-  };
+  // Login
+  loginBtn.addEventListener('click', () => {
+    const user = usernameInput.value.trim().toLowerCase();
+    const pass = passwordInput.value;
 
-  presetSelect.onchange = () => {
-    if (presetSelect.value) {
-      customMessage.value = presetSelect.value;
+    if(users[user] && users[user] === pass) {
+      setSession(user);
+      loginError.textContent = '';
+      showInterface(user);
+    } else {
+      loginError.textContent = 'Identifiant ou mot de passe incorrect.';
     }
-  };
-
-  sendBtn.onclick = () => {
-    const txt = customMessage.value.trim();
-    if (!txt) return alert("Message vide.");
-    const data = {
-      text: txt,
-      author: 'regie',
-      urgent: urgentCheck.checked,
-      time: new Date().toISOString()
-    };
-    addMessage(data);
-    customMessage.value = '';
-    presetSelect.value = '';
-    urgentCheck.checked = false;
-    displayMessages();
-  };
-
-  respondBtn.onclick = () => {
-    const txt = responseSelect.value;
-    if (!txt) return alert("Choisissez une réponse.");
-    // On efface le dernier message de la régie si présent (comme demandé)
-    let messages = getMessages();
-    if (messages.length > 0 && messages[messages.length - 1].author === 'regie') {
-      messages.pop();
-    }
-    messages.push({
-      text: txt,
-      author: currentUser,
-      urgent: false,
-      time: new Date().toISOString()
-    });
-    saveMessages(messages);
-    responseSelect.value = '';
-    displayMessages();
-  };
-
-  clearBtn.onclick = () => {
-    if (confirm("Effacer tout l'historique ?")) {
-      localStorage.removeItem('messages');
-      lastMessageCount = 0;
-      displayMessages();
-    }
-  };
-
-  toggleResponse.addEventListener('change', () => {
-    const allow = toggleResponse.checked;
-    localStorage.setItem('allowResponses', allow ? '1' : '0');
   });
 
-  logoutBtn.onclick = logoutBtn2.onclick = () => {
-    location.reload();
-  };
+  // Envoi message régie
+  sendBtn.addEventListener('click', () => {
+    const msg = messageInput.value.trim();
+    if(msg === '') {
+      alert('Veuillez saisir un message');
+      return;
+    }
+    const data = {
+      message: msg,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('messageToPresenter', JSON.stringify(data));
+    alert('Message envoyé !');
+    messageInput.value = '';
+  });
+
+  // Vérification messages pour le présentateur
+  let lastTimestamp = 0;
+  let intervalId = null;
+
+  function checkMessages() {
+    const dataStr = localStorage.getItem('messageToPresenter');
+    if(!dataStr) return;
+    const data = JSON.parse(dataStr);
+    if(data.timestamp > lastTimestamp) {
+      lastTimestamp = data.timestamp;
+      messagesDiv.innerHTML = '';
+      const msgEl = document.createElement('div');
+      msgEl.className = 'message';
+      msgEl.textContent = data.message;
+      messagesDiv.appendChild(msgEl);
+    }
+  }
+
+  function startCheckingMessages() {
+    checkMessages(); // premier check
+    intervalId = setInterval(checkMessages, 1500);
+  }
+
+  function stopCheckingMessages() {
+    if(intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  // Déconnexion
+  logoutBtnRegie.addEventListener('click', () => {
+    clearSession();
+    regieBox.style.display = 'none';
+    loginBox.style.display = 'block';
+  });
+  logoutBtnSpeaker.addEventListener('click', () => {
+    clearSession();
+    stopCheckingMessages();
+    speakerBox.style.display = 'none';
+    loginBox.style.display = 'block';
+  });
+
+  // Si déjà connecté à l'ouverture de la page
+  const currentUser = getSession();
+  if(currentUser) {
+    showInterface(currentUser);
+  }
 </script>
 
 </body>
