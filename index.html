@@ -3,28 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Com Régie Simplifiée</title>
+  <title>Com Régie </title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
+      background: #1a1a1a;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #333;
+      padding: 10px;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+    .container {
       padding: 20px;
       max-width: 600px;
       margin: auto;
-      background: #f0f0f0;
     }
     .box {
-      background: white;
+      background: #2b2b2b;
+      border-radius: 8px;
       padding: 15px;
-      border-radius: 10px;
       margin-bottom: 20px;
     }
     input, select, textarea, button {
       width: 100%;
-      padding: 8px;
       margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
       font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
     }
     button {
       background: #007bff;
@@ -37,91 +48,149 @@
     }
     .message {
       padding: 10px;
+      border-radius: 6px;
       margin-bottom: 10px;
-      border-radius: 5px;
-      background: #e0e0e0;
+      background: #3a3a3a;
+    }
+    .urgent {
+      background: #b00020 !important;
     }
     .meta {
       font-size: 0.8em;
-      color: #555;
+      color: #ccc;
+    }
+    nav button {
+      width: auto;
+      margin-right: 10px;
+      background: #444;
+    }
+    .active {
+      background: #007bff !important;
     }
   </style>
 </head>
 <body>
+  <header>Communication - Festipyat 2025</header>
+  <div class="container">
+    <div class="box" id="loginBox">
+      <h2>Connexion</h2>
+      <select id="role">
+        <option value="">-- Choisir un rôle --</option>
+        <option value="régie">Régie</option>
+        <option value="speaker">Speaker</option>
+        <option value="orga1">Orga 1</option>
+        <option value="orga2">Orga 2</option>
+      </select>
+      <input type="password" id="password" placeholder="Mot de passe">
+      <button onclick="login()">Se connecter</button>
+    </div>
 
-<div class="box" id="loginBox">
-  <h2>Connexion</h2>
-  <select id="role">
-    <option value="">-- Choisir un rôle --</option>
-    <option value="régie">Régie</option>
-    <option value="speaker">Speaker</option>
-    <option value="orga1">Orga1</option>
-    <option value="orga2">Orga2</option>
-  </select>
-  <input type="password" id="password" placeholder="Mot de passe">
-  <button onclick="login()">Se connecter</button>
-</div>
+    <div class="box" id="chatBox" style="display:none;">
+      <h3 id="roleTitle"></h3>
+      <nav>
+        <button onclick="switchTab('messages')" class="active">Messages</button>
+        <button onclick="switchTab('programme')">Programme</button>
+        <button onclick="logout()">Déconnexion</button>
+      </nav>
 
-<div class="box" id="chatBox" style="display:none;">
-  <h3 id="roleTitle"></h3>
-  <textarea id="messageInput" rows="3" placeholder="Écrire un message..."></textarea>
-  <button onclick="sendMessage()">Envoyer</button>
+      <div id="tab-messages">
+        <select id="recipient">
+          <option value="tous">À : Tous</option>
+          <option value="régie">À : Régie</option>
+          <option value="speaker">À : Speaker</option>
+          <option value="orga1">À : Orga 1</option>
+          <option value="orga2">À : Orga 2</option>
+        </select>
+        <textarea id="messageInput" rows="3" placeholder="Écrire un message..."></textarea>
+        <label><input type="checkbox" id="priority"> Prioritaire</label>
+        <button onclick="sendMessage()">Envoyer</button>
 
-  <div id="messages" style="margin-top: 20px;"></div>
-</div>
+        <div id="messages" style="margin-top: 20px;"></div>
+      </div>
+
+      <div id="tab-programme" style="display:none;">
+        <p>🗓️ Programme à venir ici...</p>
+      </div>
+    </div>
+  </div>
+
+  <audio id="notifSound" src="https://cdn.sbguys.online/assets/uploads/1732388651-9672fa4d-1b67-4a84-aa71-0da432d9cb7e.mp3"></audio>
 
 <script>
-  const PASSWORD = "festipyat2025";
-  let currentUser = null;
+const PASSWORD = "festipyat2025";
+let currentUser = null;
 
-  function login() {
-    const role = document.getElementById('role').value;
-    const pwd = document.getElementById('password').value;
+function login() {
+  const role = document.getElementById("role").value;
+  const pwd = document.getElementById("password").value;
 
-    if (!role || pwd !== PASSWORD) {
-      alert("Identifiants incorrects.");
-      return;
-    }
-
-    currentUser = role;
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('chatBox').style.display = 'block';
-    document.getElementById('roleTitle').textContent = "Connecté en tant que : " + currentUser;
-    loadMessages();
+  if (!role || pwd !== PASSWORD) {
+    alert("Identifiants incorrects.");
+    return;
   }
+  currentUser = role;
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("chatBox").style.display = "block";
+  document.getElementById("roleTitle").textContent = "Connecté en tant que : " + currentUser;
+  loadMessages();
+}
 
-  function sendMessage() {
-    const text = document.getElementById('messageInput').value.trim();
-    if (!text) return;
+function logout() {
+  location.reload();
+}
 
-    const msg = {
-      author: currentUser,
-      text,
-      time: new Date().toISOString()
-    };
+function sendMessage() {
+  const text = document.getElementById("messageInput").value.trim();
+  const to = document.getElementById("recipient").value;
+  const urgent = document.getElementById("priority").checked;
+  if (!text) return;
 
-    const messages = JSON.parse(localStorage.getItem('delayedMessages') || '[]');
-    messages.push(msg);
-    localStorage.setItem('delayedMessages', JSON.stringify(messages));
-    document.getElementById('messageInput').value = "";
-  }
+  const msg = {
+    author: currentUser,
+    to: to,
+    text: text,
+    urgent: urgent,
+    time: new Date().toISOString()
+  };
 
-  function loadMessages() {
-    setInterval(() => {
-      const messages = JSON.parse(localStorage.getItem('delayedMessages') || '[]');
-      const now = new Date();
-      const visible = messages.filter(m => new Date(m.time) <= new Date(now - 5000));
+  const messages = JSON.parse(localStorage.getItem("delayedMessages") || "[]");
+  messages.push(msg);
+  localStorage.setItem("delayedMessages", JSON.stringify(messages));
+  document.getElementById("messageInput").value = "";
+  document.getElementById("priority").checked = false;
+}
 
-      const container = document.getElementById('messages');
-      container.innerHTML = "";
-      visible.forEach(m => {
-        const div = document.createElement('div');
-        div.className = "message";
-        div.innerHTML = `<strong>${m.text}</strong><div class="meta">De : ${m.author} – ${new Date(m.time).toLocaleTimeString()}</div>`;
+function switchTab(tab) {
+  document.getElementById("tab-messages").style.display = tab === 'messages' ? 'block' : 'none';
+  document.getElementById("tab-programme").style.display = tab === 'programme' ? 'block' : 'none';
+  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function loadMessages() {
+  setInterval(() => {
+    const now = new Date();
+    const all = JSON.parse(localStorage.getItem("delayedMessages") || "[]");
+    const visible = all.filter(m => new Date(m.time) <= new Date(now - 5000));
+
+    const container = document.getElementById("messages");
+    container.innerHTML = "";
+
+    visible.forEach(m => {
+      if (m.to === "tous" || m.to === currentUser || m.author === currentUser) {
+        const div = document.createElement("div");
+        div.className = "message" + (m.urgent ? " urgent" : "");
+        div.innerHTML = `<strong>${m.text}</strong><div class="meta">De : ${m.author} → ${m.to} à ${new Date(m.time).toLocaleTimeString()}</div>`;
         container.appendChild(div);
-      });
-    }, 1000);
-  }
+
+        if (m.time > localStorage.getItem(currentUser + "_lastSound")) {
+          document.getElementById("notifSound").play();
+          localStorage.setItem(currentUser + "_lastSound", m.time);
+        }
+      }
+    });
+  }, 1000);
+}
 </script>
 
 </body>
