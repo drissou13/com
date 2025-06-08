@@ -1,206 +1,126 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Communication Régie / Présentateur</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 30px;
-  }
-  #loginBox, #regieBox, #speakerBox {
-    max-width: 400px;
-    margin: auto;
-  }
-  label {
-    display: block;
-    margin: 10px 0 5px;
-  }
-  input[type=text], input[type=password], textarea {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-  }
-  button {
-    margin-top: 15px;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  #messages {
-    border: 1px solid #ccc;
-    background: #f9f9f9;
-    min-height: 120px;
-    padding: 15px;
-    border-radius: 5px;
-  }
-  .message {
-    background-color: #e1f5fe;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
-  }
-  #logoutBtn {
-    margin-top: 20px;
-    background: #f44336;
-    color: white;
-    border: none;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Com Régie Simplifiée</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background: #f0f0f0;
+    }
+    .box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      background: #e0e0e0;
+    }
+    .meta {
+      font-size: 0.8em;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
 
-<div id="loginBox">
+<div class="box" id="loginBox">
   <h2>Connexion</h2>
-  <label for="username">Utilisateur</label>
-  <input type="text" id="username" placeholder="regie ou speaker" autocomplete="off" />
-  
-  <label for="password">Mot de passe</label>
-  <input type="password" id="password" placeholder="Mot de passe" autocomplete="off" />
-  
-  <button id="loginBtn">Se connecter</button>
-  <p id="loginError" style="color: red;"></p>
+  <select id="role">
+    <option value="">-- Choisir un rôle --</option>
+    <option value="régie">Régie</option>
+    <option value="speaker">Speaker</option>
+    <option value="orga1">Orga1</option>
+    <option value="orga2">Orga2</option>
+  </select>
+  <input type="password" id="password" placeholder="Mot de passe">
+  <button onclick="login()">Se connecter</button>
 </div>
 
-<div id="regieBox" style="display:none;">
-  <h2>Interface Régie</h2>
-  <textarea id="messageInput" placeholder="Tapez un message pour le présentateur..."></textarea>
-  <button id="sendBtn">Envoyer</button>
-  <button id="logoutBtnRegie">Se déconnecter</button>
-</div>
+<div class="box" id="chatBox" style="display:none;">
+  <h3 id="roleTitle"></h3>
+  <textarea id="messageInput" rows="3" placeholder="Écrire un message..."></textarea>
+  <button onclick="sendMessage()">Envoyer</button>
 
-<div id="speakerBox" style="display:none;">
-  <h2>Interface Présentateur</h2>
-  <div id="messages">Aucun message pour l'instant.</div>
-  <button id="logoutBtnSpeaker">Se déconnecter</button>
+  <div id="messages" style="margin-top: 20px;"></div>
 </div>
 
 <script>
-  // Comptes définis
-  const users = {
-    regie: "festipyat",
-    speaker: "speaker"
-  };
+  const PASSWORD = "festipyat2025";
+  let currentUser = null;
 
-  const loginBox = document.getElementById('loginBox');
-  const regieBox = document.getElementById('regieBox');
-  const speakerBox = document.getElementById('speakerBox');
-  const loginError = document.getElementById('loginError');
+  function login() {
+    const role = document.getElementById('role').value;
+    const pwd = document.getElementById('password').value;
 
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const loginBtn = document.getElementById('loginBtn');
-
-  const messageInput = document.getElementById('messageInput');
-  const sendBtn = document.getElementById('sendBtn');
-
-  const messagesDiv = document.getElementById('messages');
-
-  const logoutBtnRegie = document.getElementById('logoutBtnRegie');
-  const logoutBtnSpeaker = document.getElementById('logoutBtnSpeaker');
-
-  // Stockage session (simple) dans localStorage
-  function setSession(user) {
-    localStorage.setItem('currentUser', user);
-  }
-  function getSession() {
-    return localStorage.getItem('currentUser');
-  }
-  function clearSession() {
-    localStorage.removeItem('currentUser');
-  }
-
-  // Affiche les bonnes sections selon l'utilisateur connecté
-  function showInterface(user) {
-    loginBox.style.display = 'none';
-    if(user === 'regie') {
-      regieBox.style.display = 'block';
-      speakerBox.style.display = 'none';
-    } else if(user === 'speaker') {
-      speakerBox.style.display = 'block';
-      regieBox.style.display = 'none';
-      startCheckingMessages();
-    }
-  }
-
-  // Login
-  loginBtn.addEventListener('click', () => {
-    const user = usernameInput.value.trim().toLowerCase();
-    const pass = passwordInput.value;
-
-    if(users[user] && users[user] === pass) {
-      setSession(user);
-      loginError.textContent = '';
-      showInterface(user);
-    } else {
-      loginError.textContent = 'Identifiant ou mot de passe incorrect.';
-    }
-  });
-
-  // Envoi message régie
-  sendBtn.addEventListener('click', () => {
-    const msg = messageInput.value.trim();
-    if(msg === '') {
-      alert('Veuillez saisir un message');
+    if (!role || pwd !== PASSWORD) {
+      alert("Identifiants incorrects.");
       return;
     }
-    const data = {
-      message: msg,
-      timestamp: Date.now()
+
+    currentUser = role;
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('chatBox').style.display = 'block';
+    document.getElementById('roleTitle').textContent = "Connecté en tant que : " + currentUser;
+    loadMessages();
+  }
+
+  function sendMessage() {
+    const text = document.getElementById('messageInput').value.trim();
+    if (!text) return;
+
+    const msg = {
+      author: currentUser,
+      text,
+      time: new Date().toISOString()
     };
-    localStorage.setItem('messageToPresenter', JSON.stringify(data));
-    alert('Message envoyé !');
-    messageInput.value = '';
-  });
 
-  // Vérification messages pour le présentateur
-  let lastTimestamp = 0;
-  let intervalId = null;
-
-  function checkMessages() {
-    const dataStr = localStorage.getItem('messageToPresenter');
-    if(!dataStr) return;
-    const data = JSON.parse(dataStr);
-    if(data.timestamp > lastTimestamp) {
-      lastTimestamp = data.timestamp;
-      messagesDiv.innerHTML = '';
-      const msgEl = document.createElement('div');
-      msgEl.className = 'message';
-      msgEl.textContent = data.message;
-      messagesDiv.appendChild(msgEl);
-    }
+    const messages = JSON.parse(localStorage.getItem('delayedMessages') || '[]');
+    messages.push(msg);
+    localStorage.setItem('delayedMessages', JSON.stringify(messages));
+    document.getElementById('messageInput').value = "";
   }
 
-  function startCheckingMessages() {
-    checkMessages(); // premier check
-    intervalId = setInterval(checkMessages, 1500);
-  }
+  function loadMessages() {
+    setInterval(() => {
+      const messages = JSON.parse(localStorage.getItem('delayedMessages') || '[]');
+      const now = new Date();
+      const visible = messages.filter(m => new Date(m.time) <= new Date(now - 5000));
 
-  function stopCheckingMessages() {
-    if(intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
-  }
-
-  // Déconnexion
-  logoutBtnRegie.addEventListener('click', () => {
-    clearSession();
-    regieBox.style.display = 'none';
-    loginBox.style.display = 'block';
-  });
-  logoutBtnSpeaker.addEventListener('click', () => {
-    clearSession();
-    stopCheckingMessages();
-    speakerBox.style.display = 'none';
-    loginBox.style.display = 'block';
-  });
-
-  // Si déjà connecté à l'ouverture de la page
-  const currentUser = getSession();
-  if(currentUser) {
-    showInterface(currentUser);
+      const container = document.getElementById('messages');
+      container.innerHTML = "";
+      visible.forEach(m => {
+        const div = document.createElement('div');
+        div.className = "message";
+        div.innerHTML = `<strong>${m.text}</strong><div class="meta">De : ${m.author} – ${new Date(m.time).toLocaleTimeString()}</div>`;
+        container.appendChild(div);
+      });
+    }, 1000);
   }
 </script>
 
